@@ -37,7 +37,7 @@ define Package/netopeer2-server
   CATEGORY:=Utilities
   TITLE:=NETCONF server
   URL:=$(PKG_SOURCE_URL)
-  DEPENDS:=+libcurl +libpthread +libyang +libnetconf2 +libsysrepo +sysrepocfg +sysrepoctl
+  DEPENDS:=+libcurl +libpthread +libyang +libnetconf2 +libsysrepo +sysrepocfg +sysrepoctl +openssl-util
   MENU:=1
 endef
 
