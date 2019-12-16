@@ -8,19 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libyang
-PKG_VERSION:=1.0-r5
+PKG_VERSION:=1.0.109
 PKG_RELEASE:=4
 
 PKG_LICENSE:=GPL-2.0+
 PKG_MAINTAINER:=Luka Paulic <luka.paulic@sartura.hr>
 
-#PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-#PKG_SOURCE_URL:=https://codeload.github.com/CESNET/libyang/tar.gz/v$(PKG_VERSION)?
-#PKG_HASH:=a40fc25b8f2668c9554ea6f72d8ea2bbe1d8b6c60c95e011d179852a50d40930
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/CESNET/libyang/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=1686a381a8cce775102e60c8eb93f7ba64c6d4ae10591fc05d9f969a07815f60
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/CESNET/libyang.git
-PKG_SOURCE_VERSION:=1f63d03a162a122772eda741e18255fe3b5e12f9
+#PKG_SOURCE_PROTO:=git
+#PKG_SOURCE_URL:=https://github.com/CESNET/libyang.git
+#PKG_SOURCE_VERSION:=1f63d03a162a122772eda741e18255fe3b5e12f9
 
 
 # PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/build
