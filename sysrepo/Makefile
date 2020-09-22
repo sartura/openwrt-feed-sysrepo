@@ -7,51 +7,65 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_LICENSE:=ASL-2.0
-PKG_MAINTAINER:=Luka Paulic <luka.paulic@sartura.hr>
-
 PKG_NAME:=sysrepo
-PKG_VERSION:=1.3.21
-PKG_RELEASE:=4
+PKG_VERSION:=1.4.70
+PKG_RELEASE:=1
 
-PKG_SOURCE:=${PKG_NAME}-${PKG_VERSION}.tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/sysrepo/sysrepo/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=be405a33b1713d1114f3c092a6349b25a2de2a0f43a15dc6984c029f70230b3b
+PKG_HASH:=f0f894d4ed98ce9d20fda219378b844731d796e95115c07f4c067d853e20ca36
 
-#PKG_SOURCE_PROTO:=git
-#PKG_SOURCE_URL:=https://github.com/sysrepo/sysrepo.git
-#PKG_SOURCE_VERSION:=d5f9d633409e1bbe6de65930fad51248e4744b01
+PKG_MAINTAINER:=Jakov Smolic <jakov.smolic@sartura.hr>
+PKG_LICENSE:=Apache-2.0
+PKG_LICENSE_FILES:=LICENSE
 
 CMAKE_INSTALL:=1
-
 PKG_BUILD_PARALLEL:=1
-PKG_INSTALL:=1
+PKG_BUILD_DEPENDS:=swig/host
+PYTHON3_PKG_BUILD:=0
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
+include ../../lang/python/python3-package.mk
 
 define Package/libsysrepo
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE:=YANG-based data store library
+  URL:=https://www.sysrepo.org/
+  DEPENDS:=+libyang +libatomic +libprotobuf-c +libev +libredblack +librt +libpthread
+endef
+
+define Package/python3-sysrepo
+  SECTION:=lang
+  CATEGORY:=Languages
+  SUBMENU:=Python
+  TITLE:=YANG-based data store library - Python 3 bindings
+  URL:=https://www.sysrepo.org/
+  DEPENDS:=+libsysrepo +libstdcpp +python3-base +libyang-cpp
+endef
+
+define Package/sysrepo
   SECTION:=utils
   CATEGORY:=Utilities
-  URL:=$(PKG_SOURCE_URL)
-  TITLE:=YANG-based data store library
-  DEPENDS:=+libyang +libpthread
-  MENU:=1
+  TITLE:=YANG-based data store daemon and plugin
+  URL:=https://www.sysrepo.org/
+  DEPENDS:=+libsysrepo
 endef
 
 define Package/sysrepoctl
   SECTION:=utils
   CATEGORY:=Utilities
-  URL:=$(PKG_SOURCE_URL)
   TITLE:=sysrepo cli tool
+  URL:=https://www.sysrepo.org/
   DEPENDS:=+libsysrepo
 endef
 
 define Package/sysrepocfg
   SECTION:=utils
   CATEGORY:=Utilities
-  URL:=$(PKG_SOURCE_URL)
   TITLE:=sysrepo configuration tool
+  URL:=https://www.sysrepo.org/
   DEPENDS:=+libsysrepo
 endef
 
@@ -59,55 +73,63 @@ define Package/sysrepo/description
 Sysrepo is an YANG-based configuration and operational state data store for Unix/Linux applications.
 endef
 
+SWIG_VERSION:=4.0.1
+
 CMAKE_OPTIONS += \
-	-DCMAKE_BUILD_TYPE:STRING=Release \
-	-DREPO_PATH:PATH=/etc/sysrepo \
-	-DCMAKE_INSTALL_PREFIX:PATH=/usr \
+	-DENABLE_TESTS:BOOL=FALSE \
+	-DBUILD_EXAMPLES:BOOL=FALSE \
+	-DCMAKE_INSTALL_PREFIX=/usr \
+	-DCMAKE_BUILD_TYPE="Package" \
+	-DREPOSITORY_LOC:PATH=/etc/sysrepo \
+	-DCMAKE_DISABLE_FIND_PACKAGE_SWIG=FALSE \
+	-DSWIG_EXECUTABLE=$(STAGING_DIR_HOSTPKG)/bin/swig \
+	-DCALL_TARGET_BINS_DIRECTLY=OFF \
+	-DGEN_LANGUAGE_BINDINGS:BOOL=TRUE \
+	-DGEN_PYTHON_BINDINGS:BOOL=TRUE
 
 define Package/libsysrepo/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsysrepo.so* $(1)/usr/lib/
 
 	$(INSTALL_DIR) $(1)/etc/sysrepo/yang
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/modules/ietf-netconf-notifications.yang $(1)/etc/sysrepo/yang/ietf-netconf-notifications@2012-02-06.yang
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/modules/ietf-netconf-with-defaults.yang $(1)/etc/sysrepo/yang/ietf-netconf-with-defaults@2011-06-01.yang
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/modules/ietf-netconf.yang $(1)/etc/sysrepo/yang/ietf-netconf@2011-06-01.yang
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/modules/ietf-netconf-with-defaults.yang $(1)/etc/sysrepo/yang/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/modules/ietf-netconf-notifications.yang $(1)/etc/sysrepo/yang/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/modules/ietf-netconf.yang $(1)/etc/sysrepo/yang/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/modules/ietf-origin.yang $(1)/etc/sysrepo/yang/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/modules/sysrepo.yang $(1)/etc/sysrepo/yang/
 
-	$(INSTALL_DIR) $(1)/etc/sysrepo/data
-#
-#	$(INSTALL_DIR) $(1)/etc/uci-defaults
-#	$(INSTALL_BIN) ./files/libsysrepo.default $(1)/etc/uci-defaults/95_libsysrepo
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/libsysrepo.default $(1)/etc/uci-defaults/95_libsysrepo
+endef
 
+define Package/python3-sysrepo/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsysrepo-cpp.so* $(1)/usr/lib
+	$(INSTALL_DIR) $(1)$(PYTHON3_PKG_DIR)
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/bindings/python/sysrepo.py $(1)$(PYTHON3_PKG_DIR)
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/bindings/python/_sysrepo.so $(1)$(PYTHON3_PKG_DIR)
+endef
+
+define Package/sysrepo/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/sysrepo-plugind $(1)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/etc/init.d/
 	$(INSTALL_BIN) ./files/sysrepo.init $(1)/etc/init.d/sysrepo
-
-	$(INSTALL_DIR) $(1)/usr/lib/sysrepo/plugins
 endef
 
 define Package/sysrepoctl/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sysrepoctl $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/sysrepoctl $(1)/usr/bin/
 endef
 
 define Package/sysrepocfg/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sysrepocfg $(1)/usr/bin/
-endef
-
-define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsysrepo.so* $(1)/usr/lib/
-
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libsysrepo.pc $(1)/usr/lib/pkgconfig/
-
-	$(INSTALL_DIR) $(1)/usr/include/sysrepo
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/sysrepocfg $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,libsysrepo))
+$(eval $(call BuildPackage,python3-sysrepo))
+$(eval $(call BuildPackage,sysrepo))
 $(eval $(call BuildPackage,sysrepoctl))
 $(eval $(call BuildPackage,sysrepocfg))
