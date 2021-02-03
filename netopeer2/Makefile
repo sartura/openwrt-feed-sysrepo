@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017 OpenWrt.org
+# Copyright (C) 2020 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -10,15 +10,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netopeer2
-PKG_VERSION:=1.1.53
-PKG_RELEASE:=2
+PKG_VERSION:=1.1.34
+PKG_RELEASE:=4
 
 PKG_LICENSE:=BSD-3-Clause
-PKG_MAINTAINER:=Jakov Smolic <jakov.smolic@sartura.hr>
+PKG_MAINTAINER:=Luka Paulic <luka.paulic@sartura.hr>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/CESNET/Netopeer2/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=6b43026211a787d5cb91d47cb7fdd7923649044c55f264aaf85bf5676c004211
+PKG_SOURCE_URL:=https://codeload.github.com/CESNET/netopeer2/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=66f3ad68cc6e41f3231b090ef27016ccbfe007cda7d08ec19f409f7429f46ff9
 
 CMAKE_INSTALL:=1
 
@@ -32,16 +32,16 @@ define Package/netopeer2-server
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=NETCONF server
-  URL:=https://github.com/CESNET/Netopeer2
-  DEPENDS:=+libcurl +libpthread +libyang +libnetconf2 +libsysrepo +sysrepocfg +sysrepoctl +sysrepo
+  URL:=$(PKG_SOURCE_URL)
+  DEPENDS:=+libcurl +libpthread +libyang +libnetconf2 +sysrepo +sysrepocfg +sysrepoctl
   MENU:=1
 endef
 
 define Package/netopeer2-cli
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=Netopeer2 cli tool
-  URL:=https://github.com/CESNET/Netopeer2
+  TITLE:=netopeer2 cli tool
+  URL:=$(PKG_SOURCE_URL)
   DEPENDS:=+libpthread +libyang +libnetconf2 +libopenssl
 endef
 
@@ -55,13 +55,17 @@ endef
 CMAKE_OPTIONS += \
 	-DCMAKE_INSTALL_PREFIX:PATH=/usr \
 	-DCMAKE_BUILD_TYPE:STRING=Release \
-	-DGENERATE_HOSTKEY:BOOL=OFF \
 	-DINSTALL_MODULES:BOOL=OFF \
-	-DMERGE_LISTEN_CONFIG:BOOL=OFF
+	-DGENERATE_HOSTKEY:BOOL=OFF \
+	-DMERGE_LISTEN_CONFIG:BOOL=OFF \
+
+ifndef PACKAGE_netopeer2-cli
+	CMAKE_OPTIONS += BUILD_CLI:BOOL=OFF
+endif
 
 define Package/netopeer2-server/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/netopeer2-server $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/netopeer2-server $(1)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/etc/sysrepo/yang
 	$(INSTALL_DIR) $(1)/etc/netopeer2/modules
@@ -78,7 +82,7 @@ endef
 
 define Package/netopeer2-cli/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/netopeer2-cli $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/netopeer2-cli $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,netopeer2-server))
